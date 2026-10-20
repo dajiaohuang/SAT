@@ -685,7 +685,7 @@ class SatOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required(CONF_SYNC_CLIMATES_WITH_MODE, default=options[CONF_SYNC_CLIMATES_WITH_MODE]): bool,
         }
 
-        if options.get(CONF_HEATING_SYSTEM) == HEATING_SYSTEM_HEAT_PUMP:
+        if self._config_entry.data.get(CONF_HEATING_SYSTEM) == HEATING_SYSTEM_HEAT_PUMP:
             schema[vol.Required(CONF_CYCLES_PER_HOUR, default=str(options[CONF_CYCLES_PER_HOUR]))] = selector.SelectSelector(
                 selector.SelectSelectorConfig(mode=SelectSelectorMode.DROPDOWN, options=[
                     selector.SelectOptionDict(value="2", label="Normal (2x per hour)"),
@@ -693,7 +693,7 @@ class SatOptionsFlowHandler(config_entries.OptionsFlow):
                 ])
             )
 
-        if options.get(CONF_HEATING_SYSTEM) == HEATING_SYSTEM_RADIATORS:
+        if self._config_entry.data.get(CONF_HEATING_SYSTEM) == HEATING_SYSTEM_RADIATORS:
             schema[vol.Required(CONF_CYCLES_PER_HOUR, default=str(options[CONF_CYCLES_PER_HOUR]))] = selector.SelectSelector(
                 selector.SelectSelectorConfig(mode=SelectSelectorMode.DROPDOWN, options=[
                     selector.SelectOptionDict(value="3", label="Normal (3x per hour)"),

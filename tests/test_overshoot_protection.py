@@ -136,3 +136,29 @@ async def test_available_temperature_still_completes(
         updater.cancel()
         with suppress(asyncio.CancelledError):
             await updater
+
+
+@pytest.mark.parametrize("failure", ["timeout", "cancelled"])
+async def test_failed_calculation_resets_heater(
+    coordinator, protection, monkeypatch, failure,
+):
+    from unittest.mock import AsyncMock
+    from custom_components.sat.coordinator import DeviceState
+    from custom_components.sat.const import MINIMUM_SETPOINT
+
+    heater = AsyncMock(wraps=coordinator.async_set_heater_state)
+    setpoint = AsyncMock(wraps=coordinator.async_set_control_setpoint)
+    monkeypatch.setattr(coordinator, "async_set_heater_state", heater)
+    monkeypatch.setattr(coordinator, "async_set_control_setpoint", setpoint)
+    monkeypatch.setattr(overshoot_protection, "OVERSHOOT_PROTECTION_STABLE_WAIT", 0.02)
+    if failure == "timeout":
+        with pytest.raises(TimeoutError):
+            await protection.calculate()
+    else:
+        task = asyncio.create_task(protection.calculate())
+        await asyncio.sleep(0.01)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    heater.assert_awaited_once_with(DeviceState.OFF)
+    setpoint.assert_awaited_once_with(MINIMUM_SETPOINT)

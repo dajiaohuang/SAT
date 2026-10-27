@@ -686,7 +686,10 @@ class SatOptionsFlowHandler(config_entries.OptionsFlow):
         }
 
         if self._config_entry.data.get(CONF_HEATING_SYSTEM) == HEATING_SYSTEM_HEAT_PUMP:
-            schema[vol.Required(CONF_CYCLES_PER_HOUR, default=str(options[CONF_CYCLES_PER_HOUR]))] = selector.SelectSelector(
+            cycle_default = str(options[CONF_CYCLES_PER_HOUR])
+            if cycle_default not in {"2", "3"}:
+                cycle_default = "2"
+            schema[vol.Required(CONF_CYCLES_PER_HOUR, default=cycle_default)] = selector.SelectSelector(
                 selector.SelectSelectorConfig(mode=SelectSelectorMode.DROPDOWN, options=[
                     selector.SelectOptionDict(value="2", label="Normal (2x per hour)"),
                     selector.SelectOptionDict(value="3", label="High (3x per hour)"),

@@ -53,3 +53,26 @@ async def test_options_cycles_follow_setup_system(hass, heating_system, expected
         assert cycle_selector is None
     else:
         assert [item["value"] for item in cycle_selector.config["options"]] == expected_cycles
+
+
+@pytest.mark.parametrize("saved_cycles, expected_default", [
+    (None, "2"), ("2", "2"), (2, "2"), ("3", "3"), (3, "3"),
+    ("4", "2"), (4, "2"), (0, "2"),
+])
+async def test_heat_pump_cycle_default_is_accepted(hass, saved_cycles, expected_default):
+    options = {} if saved_cycles is None else {CONF_CYCLES_PER_HOUR: saved_cycles}
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={**DEFAULT_USER_DATA, CONF_HEATING_SYSTEM: HEATING_SYSTEM_HEAT_PUMP},
+        options=options,
+    )
+    flow = SatOptionsFlowHandler(entry)
+    flow.hass = hass
+    result = await flow.async_step_system_configuration()
+    cycle_key, cycle_selector = next(
+        (key, value) for key, value in result["data_schema"].schema.items()
+        if key.schema == CONF_CYCLES_PER_HOUR
+    )
+    default = cycle_key.default()
+    assert default == expected_default
+    assert cycle_selector(default) == default
